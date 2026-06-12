@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central do Apito - Copa 2026</title>
+    <style>
+        /* ==========================================================================
+           1. CONFIGURAÇÕES PRINCIPAIS E FONTES
+           ========================================================================== */
+        @font-face {
+            font-family: 'Qatar2022';
+            src: url('qatar2022-arabic-bold.ttf') format('truetype');
+            font-weight: bold;
+            font-style: normal;
+        }
+
+        :root {
+            --red-dark: #5A0010;       
+            --red-vibrant: #FF002B;    
+            --orange: #FF6A00;         
+            --lime-yellow: #E1FF00;    
+            --green-dark: #004D25;     
+            --green-light: #00FF6A;    
+            --blue-dark: #001B4D;      
+            --blue-light: #00E5FF;     
+            
+            --bg-color: #050A15;     
+            --card-bg: rgba(0, 27, 77, 0.65); 
+            --text-light: #FFFFFF;
+            --text-muted: #B3C2DF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        header h1, 
+        header p, 
+        .card h2, 
+        .match-info h3, 
+        .modal-content h3, 
+        .stat-value {
+            font-family: 'Qatar2022', 'Arial Black', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            background-image: radial-gradient(circle at top right, var(--red-dark) 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, var(--green-dark) 0%, transparent 35%),
+                              radial-gradient(circle at center, var(--blue-dark) 0%, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* ==========================================================================
+           2. LAYOUT E COMPONENTES GERAIS
+           ========================================================================== */
+        header {
+            background: linear-gradient(90deg, var(--red-dark) 0%, var(--red-vibrant) 30%, var(--orange) 65%, var(--lime-yellow) 100%);
+            color: var(--text-light);
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 5px solid var(--blue-light);
+            box-shadow: 0 4px 20px rgba(255, 0, 43, 0.3);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+        }
+
+        header p {
+            font-weight: bold;
+            margin-top: 5px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 3rem auto 1rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .container-table {
+            max-width: 1000px;
+            margin: 0 auto 3rem auto;
+            padding: 0 1rem;
+        }
+
+        .hidden { display: none !important; }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 229, 255, 0.2); 
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+        }
+
+        .card h2 {
+            margin-bottom: 1.5rem;
+            color: var(--lime-yellow);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
+        }
+
+        /* ==========================================================================
+           3. GRADES DE ESTATÍSTICAS E BOTÕES
+           ========================================================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.8rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: rgba(4, 12, 32, 0.7);
+            padding: 1.5rem 0.5rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 229, 255, 0.4);
+        }
+
+        .stat-value { font-size: 2.2rem; margin-bottom: 0.5rem; font-weight: 900; }
+        .matches { color: var(--blue-light); }
+        .rating { color: var(--orange); }
+        .yellow { color: var(--lime-yellow); }
+        .red { color: var(--red-vibrant); }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-container {
+            text-align: center;
+            margin-top: -1rem;
+            margin-bottom: 2rem;
+        }
+
+        button.btn-primary {
+            width: 100%; background: var(--orange); color: #FFF; border: none; padding: 1.2rem;
+            border-radius: 12px; font-size: 1.2rem; text-transform: uppercase; cursor: pointer;
+            transition: all 0.3s; font-weight: bold; box-shadow: 0 4px 15px rgba(255, 106, 0, 0.3);
+        }
+        button.btn-primary:hover { background: var(--red-vibrant); transform: translateY(-2px); }
+
+        button.btn-action {
+            background: transparent; color: var(--blue-light); border: 2px solid var(--blue-light);
+            padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: bold;
+            cursor: pointer; transition: all 0.3s; text-transform: uppercase;
+        }
+        button.btn-action:hover { background: var(--blue-light); color: var(--blue-dark); box-shadow: 0 0 15px rgba(0, 229, 255, 0.4); }
+
+        button.btn-outline {
+            width: 100%; background: transparent; color: var(--text-light); border: 2px solid rgba(255,255,255,0.2);
+            padding: 1rem; border-radius: 12px; text-transform: uppercase; cursor: pointer; transition: all 0.3s; font-weight: bold;
+        }
+        button.btn-outline:hover { border-color: var(--lime-yellow); color: var(--lime-yellow); }
+
+        /* ==========================================================================
+           4. ÁREA DO JOGO ATUAL E LISTAS
+           ========================================================================== */
+        .match-info {
+            background: linear-gradient(135deg, var(--red-dark), var(--blue-dark));
+            border: 1px solid var(--orange);
+            padding: 1.5rem; border-radius: 12px; text-align: center; margin-bottom: 2rem;
+        }
+        .match-info h3 { font-size: 1.6rem; margin-bottom: 10px; }
+        .match-info p { font-size: 0.9rem; color: var(--text-muted); }
+
+        .referee-profile { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; }
+        .referee-avatar {
+            width: 90px; height: 90px; border: 3px solid var(--green-light); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--blue-dark);
+        }
+        .referee-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .rating-stars { display: flex; justify-content: center; gap: 0.5rem; font-size: 3rem; color: rgba(255,255,255,0.2); cursor: pointer; margin-bottom: 1.5rem; }
+        .rating-stars span.active { color: var(--lime-yellow); text-shadow: 0 0 15px var(--lime-yellow); }
+
+        textarea { width: 100%; height: 100px; padding: 1rem; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 12px; resize: none; margin-bottom: 1.5rem; }
+
+        .list-container { display: flex; flex-direction: column; gap: 1rem; }
+        .list-item { display: flex; align-items: center; justify-content: space-between; background: rgba(0, 0, 0, 0.4); padding: 1.2rem 1.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+        .match-teams { font-size: 1.3rem; flex: 1; text-align: center; font-weight: bold; }
+
+        /* ==========================================================================
+           5. JANELAS FLUTUANTES (MODAIS)
+           ========================================================================== */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 5, 15, 0.85); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        
+        .modal-content { 
+            background: #030c1b; 
+            border: 2.5px solid var(--blue-light); 
+            border-radius: 20px; 
+            padding: 2.5rem 2rem; 
+            width: 95%; 
+            max-width: 620px; 
+            position: relative; 
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2), inset 0 0 15px rgba(0, 229, 255, 0.1); 
+        }
+        
+        .btn-close-modal { position: absolute; top: 15px; right: 20px; background: transparent; border: none; color: var(--text-muted); font-size: 2rem; cursor: pointer; transition: color 0.2s; }
+        .btn-close-modal:hover { color: var(--red-vibrant); }
+
+        .modal-header-layout { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+        .modal-header-text h3 { font-size: 2rem; color: var(--lime-yellow); line-height: 1.1; }
+        .modal-header-text p { font-size: 0.9rem; color: var(--text-muted); font-weight: bold; margin-top: 2px; }
+
+        /* Círculos dos Escudos */
+        .match-summary-badges { display: flex; align-items: center; position: relative; }
+        .team-badge-circle {
+            width: 80px; height: 80px; border: 3px solid var(--green-light); border-radius: 50%;
+            background: #040d1a; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(0, 255, 106, 0.6); overflow: hidden; z-index: 2;
+        }
+        .team-badge-circle img { width: 85%; height: 85%; object-fit: contain; }
+        .vs-badge {
+            background: #050a15; border: 2px solid var(--text-light); border-radius: 50%;
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: bold; z-index: 3; margin: 0 -16px; color: var(--text-light);
+        }
+
+        /* CSS ESTILIZADO DA IMAGEM DO ESTÁDIO NO RESUMO */
+        .stadium-photo-container {
+            width: 100%;
+            height: 180px;
+            border-radius: 14px;
+            border: 2px solid rgba(0, 229, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.1);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stadium-photo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+        
+        .stadium-photo-container:hover img {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+            .list-item { flex-direction: column; gap: 12px; text-align: center; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .modal-header-layout { flex-direction: column; text-align: center; }
+            .stadium-photo-container { height: 130px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏆 Central do Apito</h1>
+        <p>COPA DO MUNDO FIFA 2026™</p>
+    </header>
+
+    <div id="view-main">
+        <div class="container" id="avaliacao-area">
+            
+            <div class="card">
+                <h2>Raio-X do Árbitro</h2>
+                <div class="referee-profile">
+                    <div class="referee-avatar">
+                        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Szymon Marciniak">
+                    </div>
+                    <div>
+                        <h3>Szymon Marciniak</h3>
+                        <p>Polônia - FIFA</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="stat-value matches">3</div><div class="stat-label">Jogos</div></div>
+                    <div class="stat-box"><div class="stat-value rating">4.5★</div><div class="stat-label">Média</div></div>
+                    <div class="stat-box"><div class="stat-value yellow">3.5</div><div class="stat-label">Amarelos</div></div>
+                    <div class="stat-box"><div class="stat-value red">0.5</div><div class="stat-label">Vermelhos</div></div>
+                </div>
+
+                <button class="btn-outline" onclick="switchView('view-referees')">👀 Ver todos os árbitros</button>
+            </div>
+
+            <div class="card">
+                <h2>Voz da Torcida</h2>
+                <div class="match-info">
+                    <p class="round" id="current-round">Fase de Grupos - 1º Rodada</p>
+                    <h3 id="current-match">🇲🇽 MÉXICO 2 X 0 ÁFRICA DO SUL 🇿🇦</h3>
+                    <p class="ref" id="current-stadium">Estádio Azteca </p>
+                </div>
+                
+                <div class="summary-container">
+                    <button class="btn-action" onclick="abrirResumo()">📄 Ver Resumo do Jogo</button>
+                </div>
+
+                <p style="text-align: center; font-weight: bold; margin-bottom: 10px;">Como você avalia a arbitragem?</p>
+                <div class="rating-stars" id="star-container">
+                    <span data-value="1">★</span><span data-value="2">★</span><span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span>
+                </div>
+
+                <textarea id="review-comment" placeholder="Deixe seu comentário sobre a arbitragem..."></textarea>
+                <button class="btn-primary" onclick="submitReview()">Enviar Avaliação</button>
+            </div>
+        </div>
+
+        <div class="container-table">
+            <div class="card">
+                <h2>Calendário de Jogos</h2>
+                <div class="list-container">
+                    <div class="list-item">
+                        <div><strong>11 Jun • 16:00</strong><br><small>Abertura</small></div>
+                        <div class="match-teams">🇲🇽 MÉXICO X ALEMANHA 🇩🇪</div>
+                        <button class="btn-action" onclick="selectMatch('Jogo de Abertura', '🇲🇽 MÉXICO X ALEMANHA 🇩🇪', 'Estádio Azteca, Cidade do México')">Avaliar</button>
+                    </div>
+                    <div class="list-item">
+                        <div><strong>12 Jun • 19:00</strong><br><small>Grupo G</small></div>
+                        <div class="match-teams">🇧🇷 BRASIL X SUÍÇA 🇨🇭</div>
+                        <button class="btn-action" onclick="selectMatch('Grupo G', '🇧🇷 BRASIL X SUÍÇA 🇨🇭', 'Estádio SoFi, Los Angeles')">Avaliar</button>
+                    </div>
+                    <div class="list-item">
+                        <div><strong>13 Jun • 15:00</strong><br><small>Grupo C</small></div>
+                        <div class="match-teams">🇺🇸 EUA X INGLATERRA 🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+                        <button class="btn-action" onclick="selectMatch('Grupo C', '🇺🇸 EUA X INGLATERRA 🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Estádio MetLife, Nova York')">Avaliar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-referees" class="container-table hidden" style="margin-top: 3rem;">
+        <div class="card">
+            <div class="nav-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Quadro de Árbitros</h2>
+                <button class="btn-action" onclick="switchView('view-main')">⬅ Voltar</button>
+            </div>
+            <div class="list-container" style="margin-top:1.5rem;">
+                <div class="list-item">
+                    <div class="referee-info"><h4>Szymon Marciniak</h4><p>Polônia</p></div>
+                    <button class="btn-action" onclick="openRefereeModal('Szymon Marciniak', 'Polônia', 'https://randomuser.me/api/portraits/men/32.jpg', '3', '4.5', '3.5', '0.5')">Ver Painel</button>
+                </div>
+                <div class="list-item">
+                    <div class="referee-info"><h4>Daniele Orsato</h4><p>Itália</p></div>
+                    <button class="btn-action" onclick="openRefereeModal('Daniele Orsato', 'Itália', 'https://randomuser.me/api/portraits/men/65.jpg', '4', '4.8', '4.1', '0.2')">Ver Painel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="referee-modal" class="modal-overlay hidden" onclick="closeModalOutside(event, 'referee-modal')">
+        <div class="modal-content">
+            <button class="btn-close-modal" onclick="closeModal('referee-modal')">&times;</button>
+            <div class="referee-profile">
+                <div class="referee-avatar"><img id="modal-img" src="" alt="Avatar"></div>
+                <div><h3 id="modal-name" style="color: var(--lime-yellow);">Nome</h3><p id="modal-country">País</p></div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-box"><div class="stat-value matches" id="modal-matches">0</div><div class="stat-label">Jogos</div></div>
+                <div class="stat-box"><div class="stat-value rating" id="modal-rating">0</div><div class="stat-label">Média</div></div>
+                <div class="stat-box"><div class="stat-value yellow" id="modal-yellow">0</div><div class="stat-label">Amarelos</div></div>
+                <div class="stat-box"><div class="stat-value red" id="modal-red">0</div><div class="stat-label">Vermelhos</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="summary-modal" class="modal-overlay hidden" onclick="closeModalOutside(event, 'summary-modal')">
+        <div class="modal-content">
+            <button class="btn-close-modal" onclick="closeModal('summary-modal')">&times;</button>
+            
+            <div class="modal-header-layout">
+                <div class="match-summary-badges">
+                    <div class="team-badge-circle">
+                        <img id="summary-img-home" src="" alt="Mandante">
+                    </div>
+                    <div class="vs-badge">vs</div>
+                    <div class="team-badge-circle">
+                        <img id="summary-img-away" src="" alt="Visitante">
+                    </div>
+                </div>
+                <div class="modal-header-text">
+                    <h3>Resumo do Jogo</h3>
+                    <p id="summary-match-title">Carregando...</p>
+                </div>
+            </div>
+
+            <div class="stadium-photo-container">
+                <img id="summary-stadium-img" src="Mexico_national_football_team_crest_(2022).png" alt="Foto do Estádio">
+            </div>
+
+            <div class="summary-grid">
+                <div class="stat-box"><div class="stat-value" style="color: var(--blue-light);" id="stat-gols">0</div><div class="stat-label">Gols Totais</div></div>
+                <div class="stat-box"><div class="stat-value" style="color: var(--orange);" id="stat-chutes">0</div><div class="stat-label">Chutes a Gol</div></div>
+                <div class="stat-box"><div class="stat-value" style="color: var(--lime-yellow);" id="stat-amarelos">0</div><div class="stat-label">Cartões Amarelos</div></div>
+                <div class="stat-box"><div class="stat-value" style="color: var(--red-vibrant);" id="stat-vermelhos">0</div><div class="stat-label">Cartões Vermelhos</div></div>
+                <div class="stat-box"><div class="stat-value" style="color: #FFFFFF;" id="stat-posse">0%</div><div class="stat-label" id="stat-posse-team">Posse de Bola</div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchView(viewId) {
+            document.getElementById('view-main').classList.add('hidden');
+            document.getElementById('view-referees').classList.add('hidden');
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        function openRefereeModal(name, country, imgSrc, matches, rating, yellow, red) {
+            document.getElementById('modal-name').innerText = name;
+            document.getElementById('modal-country').innerText = country;
+            document.getElementById('modal-img').src = imgSrc;
+            document.getElementById('modal-matches').innerText = matches;
+            document.getElementById('modal-rating').innerText = rating + "★";
+            document.getElementById('modal-yellow').innerText = yellow;
+            document.getElementById('modal-red').innerText = red;
+            document.getElementById('referee-modal').classList.remove('hidden');
+        }
+
+        // ==========================================================================
+        // SISTEMA DE ESCUDOS E ESTÁDIOS VIA JAVASCRIPT
+        // ==========================================================================
+        function abrirResumo() {
+            const partida = document.getElementById('current-match').innerText;
+            const estadio = document.getElementById('current-stadium').innerText;
+            document.getElementById('summary-match-title').innerText = partida + " - " + estadio;
+
+            if (partida.includes("ÁFRICA")) {
+                // Escudos
+                document.getElementById('summary-img-home').src = 'https://upload.wikimedia.org/wikipedia/pt/f/f3/Mexico_national_football_team_crest_%282022%29.png'; 
+                document.getElementById('summary-img-away').src = 'https://upload.wikimedia.org/wikipedia/pt/c/cb/South_African_Football_Association.png';
+                // Foto do Estádio (Substitua pela sua local: 'metlife.jpg')
+                document.getElementById('summary-stadium-img').src = 'https://upload.wikimedia.org/wikipedia/commons/0/07/Vista_a%C3%A9rea_del_Estadio_Azteca_-_2026_-_02.jpg';
+                setStats("3", "12", "4", "1", "55%", "Posse (MÉX)");
+                
+            } else if (partida.includes("ALEMANHA")) {
+                document.getElementById('summary-img-home').src = 'https://flagcdn.com/w160/mx.png';
+                document.getElementById('summary-img-away').src = 'https://flagcdn.com/w160/de.png';
+                // Foto do Estádio (Substitua pela sua local: 'azteca.jpg')
+                document.getElementById('summary-stadium-img').src = 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&w=800&q=80';
+                setStats("2", "16", "5", "0", "45%", "Posse (ALE)");
+                
+            } else if (partida.includes("SUÍÇA")) {
+                document.getElementById('summary-img-home').src = 'https://flagcdn.com/w160/br.png';
+                document.getElementById('summary-img-away').src = 'https://flagcdn.com/w160/ch.png';
+                // Foto do Estádio (Substitua pela sua local: 'sofi.jpg')
+                document.getElementById('summary-stadium-img').src = 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?auto=format&fit=crop&w=800&q=80';
+                setStats("4", "20", "2", "0", "62%", "Posse (BRA)");
+                
+            } else {
+                document.getElementById('summary-img-home').src = 'https://flagcdn.com/w160/us.png';
+                document.getElementById('summary-img-away').src = 'https://flagcdn.com/w160/gb-eng.png';
+                // Foto do Estádio (Substitua pela sua local: 'metlife.jpg')
+                document.getElementById('summary-stadium-img').src = 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=800&q=80';
+                setStats("1", "8", "6", "2", "48%", "Posse (ING)");
+            }
+
+            document.getElementById('summary-modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function setStats(g, c, a, v, p, t) {
+            document.getElementById('stat-gols').innerText = g;
+            document.getElementById('stat-chutes').innerText = c;
+            document.getElementById('stat-amarelos').innerText = a;
+            document.getElementById('stat-vermelhos').innerText = v;
+            document.getElementById('stat-posse').innerText = p;
+            document.getElementById('stat-posse-team').innerText = t;
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function closeModalOutside(event, modalId) {
+            if (event.target.id === modalId) closeModal(modalId);
+        }
+
+        // Sistema de Estrelas
+        const stars = document.querySelectorAll('.rating-stars span');
+        let currentRating = 0;
+
+        stars.forEach(star => {
+            star.addEventListener('mouseover', function() { highlightStars(this.getAttribute('data-value')); });
+            star.addEventListener('mouseout', function() { highlightStars(currentRating); });
+            star.addEventListener('click', function() {
+                currentRating = this.getAttribute('data-value');
+                highlightStars(currentRating);
+            });
+        });
+
+        function highlightStars(value) {
+            stars.forEach(star => {
+                if (star.getAttribute('data-value') <= value) star.classList.add('active');
+                else star.classList.remove('active');
+            });
+        }
+
+        function submitReview() {
+            if (currentRating === 0) {
+                alert('Selecione uma nota antes de enviar!');
+                return;
+            }
+            alert('Sua avaliação foi enviada com sucesso! ⚽');
+            currentRating = 0;
+            highlightStars(0);
+            document.getElementById('review-comment').value = '';
+        }
+
+        function selectMatch(round, teams, stadium) {
+            document.getElementById('current-round').innerText = round;
+            document.getElementById('current-match').innerText = teams;
+            document.getElementById('current-stadium').innerText = stadium;
+            document.getElementById('avaliacao-area').scrollIntoView({ behavior: 'smooth' });
+            currentRating = 0;
+            highlightStars(0);
+            document.getElementById('review-comment').value = '';
+        }
+    </script>
+</body>
+</html>
